@@ -1,0 +1,109 @@
+import requests
+import json
+import tkinter as tk
+import csv
+import time
+
+win=tk.Tk()      
+win.title("tkinter")
+win.geometry('800x800') #畫面長寬
+
+
+var=tk.StringVar()    #收盤價label的值
+var2=tk.StringVar()   #收盤價的值
+var3=tk.StringVar()   #爬蟲開始的值
+var4=tk.StringVar()   #爬蟲結束的值
+var5=tk.StringVar()    #想觀看股票代碼的值
+var6=tk.StringVar()   #想抓取股票代碼的值
+
+lab1=tk.Label(win,bg='red',textvariable=var).pack()  #設置收盤價label
+
+
+lab2=tk.Label(win,bg='red',text="收盤價"+" 106/01/03").place(x=10,y=25)
+lab3=tk.Label(win,bg='green',text="爬蟲開始年份 "+"  2017").place(x=10,y=45)
+lab4=tk.Label(win,bg='blue',text="爬蟲結束年份"  +"  2018" ).place(x=10,y=65)
+En=tk.Entry(win,bg='red',textvariable=var2).pack()   #設置收盤價text
+E5=tk.Entry(win,bg='red',textvariable=var5).place(x=550,y=25)   #股票代碼text
+En2=tk.Entry(win,bg='green',textvariable=var3).pack()   #設置爬蟲開始text
+E6=tk.Entry(win,bg='green',textvariable=var6).place(x=550,y=45)  
+En3=tk.Entry(win,bg='blue',textvariable=var4).pack()   #設置爬蟲結束text
+
+
+
+
+def close_price_hit_me():            #收盤價函式
+        close_price_date=var2.get()     #收盤價的日期
+        stock_value=var5.get()       #股票代碼
+        d=close_price_date.replace("/","")   #處理日期格式
+        e=d[0:3]
+        e=int(e)+1911
+        f=d[3:8]
+        e=str(e)+f
+        year=e[0:4]   
+        month=e[4:6]                         #處理日期格式
+        
+        filename_2=year+month+"01"    
+        
+
+        with open('D:\\'+filename_2+stock_value+'.csv', newline='', encoding="Big5") as csvfile:            #讀取csv檔
+                   
+            content=[]
+            reader=csv.reader(csvfile)               #讀取csv每一行
+            
+            
+            for row in reader:
+                content.append(row)             #把csv裡面的內容放進去content陣列裡面
+            
+            
+            b=len(content)                         #整個csv的欄位總數
+            
+            for i in range(b):                  #整個csv的欄位總數
+                for j in range(8):               # 8是csv的列
+                    if content[i][j]==var2.get():                   #如果等於text裡面的值
+                        c=i                                         # 106/11/02在content裡面的位置 
+                        d=j                                         # 106/11/02在content裡面的位置 
+                    
+                    else:
+                        var.set("這天假日")
+            var.set(content[c][6])                  #收盤價
+
+
+
+def scratch_data():                 #爬蟲函式
+    startyear=int(var3.get())        #爬蟲開始日期
+    enddyear=int(var4.get())         #爬蟲結束日期  
+    scratch_stock_value=var6.get()   #要抓取的股票代碼
+    for j in range(startyear,enddyear+1):
+        for  i in range(1,13):         #1整年資料
+            month=''
+            if i <10:                  #10月以下要加0
+                month='0'+str(i)      #變成字串
+            else: 
+                month=str(i)    
+
+            url='https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date='+str(j)+str(month)+'01'+'&stockNo='+scratch_stock_value+'&'
+            
+            filename=str(j)+str(month)+'01'
+            res=requests.get(url)      #開始抓取資料
+            s=json.loads(res.text)    #把抓下來的json檔存在s變數裡面            
+
+            
+            
+            outputfile=open('D:\\'+filename+scratch_stock_value+'.csv','w',newline='')
+            outputwriter=csv.writer(outputfile)
+        
+            outputwriter.writerow(s['fields']) #把json裡面的field部分寫進去csv檔案裡面
+
+            for data in (s['data']):
+                outputwriter.writerow(data)   #把json裡面的data部分寫進去csv檔案裡面
+            outputfile.close()    
+            time.sleep(3)        #每3秒抓一次
+
+
+
+
+        
+btn_close_price=tk.Button(win,text='收盤價',width=10,height=2,command=close_price_hit_me).pack()           #設置button  收盤價按鈕
+
+btn_scratch=tk.Button(win,text='爬資料',width=10,height=2,command=scratch_data).pack()                     #設置button  抓取資料按鈕
+win.mainloop()
