@@ -1,0 +1,6 @@
+import pandas
+import matplotlib.pyplot as plt  
+df=pandas.read_csv('b.csv')
+df.index=pandas.to_datetime(df.index,format='%Y%m%d')#把index改成日期
+%pylab inline #用jupyter繪圖要用到
+print(df.plot(kind='line',y=['現金'])) #折線圖
